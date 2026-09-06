@@ -1,0 +1,44 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Data & model artifacts (regenerated via `make pipeline`; kept out of git
+# per project instructions not to commit large datasets/model binaries).
+# The raw dataset itself (~5.8MB) IS committed for zero-friction reproducibility
+# — see README "Dataset" section for the original source and re-download command.
+data/processed/*.parquet
+data/processed/*.csv
+models/*.joblib
+models/*.parquet
+mlruns/
+reports/figures/*.html
+reports/metrics/*.json
+
+# Keep directory structure in git
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!models/.gitkeep
+!reports/figures/.gitkeep
+!reports/metrics/.gitkeep
+
+# Notebooks
+notebooks/.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
