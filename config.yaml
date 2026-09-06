@@ -1,0 +1,112 @@
+# =============================================================================
+# FinSight Configuration
+# All "magic numbers" used across the pipeline live here so behavior can be
+# audited and changed without touching code.
+# =============================================================================
+
+random_seed: 42
+
+# ---------------------------------------------------------------------------
+# Paths (all relative to project root -- never hardcode machine-specific paths)
+# ---------------------------------------------------------------------------
+paths:
+  models_dir: "models"
+  reports_dir: "reports"
+
+# ---------------------------------------------------------------------------
+# Data
+# ---------------------------------------------------------------------------
+data:
+  raw_path: "data/raw/bank-additional-full.csv"
+  raw_delimiter: ";"
+  processed_path: "data/processed/finsight_dataset.parquet"
+  processed_csv_path: "data/processed/finsight_dataset.csv"
+
+# ---------------------------------------------------------------------------
+# Experiment design
+# ---------------------------------------------------------------------------
+experiment:
+  treatment_column: "experiment_group"
+  outcome_column: "conversion"
+  treatment_share: 0.5          # share of eligible population assigned to treatment
+  # Base (control-arm) conversion propensity model.
+  # log-odds = intercept + sum(coef_i * standardized_feature_i)
+  # This is a transparent, documented, hand-specified mechanism (NOT fit on
+  # the raw dataset's real outcome) used purely to simulate a believable
+  # baseline conversion probability from customer attributes.
+  base_propensity:
+    intercept: -2.35
+    coefficients:
+      credit_score_z: 0.32
+      income_z: 0.22
+      tenure_years_z: 0.18
+      previous_success: 0.85     # poutcome == success
+      previous_failure: -0.25    # poutcome == failure
+      campaign_contacts_z: -0.20 # more prior contacts this campaign -> fatigue
+      has_default: -0.55
+      has_housing_loan: -0.15
+      has_personal_loan: -0.20
+      age_mid_career: 0.10       # age between 30-55
+      university_educated: 0.15
+      consumer_confidence_z: 0.10
+  # Treatment effect mechanism: uplift is added to the control log-odds.
+  # Heterogeneous effects are expressed as additive log-odds bonuses for
+  # specific, clearly-named segments to create realistic differential lift.
+  treatment_effect:
+    base_uplift_log_odds: 0.35
+    heterogeneous_bonus:
+      medium_risk_band: 0.20
+      high_engagement: 0.25
+      mid_income_band: 0.10
+
+# ---------------------------------------------------------------------------
+# Segmentation
+# ---------------------------------------------------------------------------
+segmentation:
+  min_segment_size: 200
+  risk_bands: ["Low", "Medium", "High"]
+  income_bands: ["Low", "Mid", "High"]
+  tenure_bands: ["New", "Established", "Loyal"]
+
+# ---------------------------------------------------------------------------
+# Modeling
+# ---------------------------------------------------------------------------
+modeling:
+  target_column: "conversion"
+  treatment_column: "experiment_group"
+  test_size: 0.2
+  val_size: 0.2            # fraction of the remaining train split
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+    class_weight: "balanced"
+  xgboost:
+    n_estimators: 300
+    max_depth: 4
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+    min_child_weight: 5
+    reg_lambda: 1.0
+    eval_metric: "auc"
+  mlflow:
+    # SQLite-backed local tracking store (no external MLflow server required).
+    # Newer MLflow versions deprecated the plain-folder filesystem backend.
+    tracking_uri: "sqlite:///mlruns/mlflow.db"
+    experiment_name: "finsight-conversion-model"
+
+# ---------------------------------------------------------------------------
+# Business / risk assumptions (all illustrative, documented in README)
+# ---------------------------------------------------------------------------
+business:
+  intervention_cost: 12.0          # $ cost to deliver a personalized offer
+  financial_value_per_conversion: 145.0   # $ expected margin from a converted customer
+  risk_cost_multiplier: 0.9        # $ expected loss per unit of risk_score for a converted, high-risk customer
+  min_predicted_probability: 0.15
+  max_acceptable_risk: 0.65        # risk_score in [0,1]; above this customers are excluded
+  target_population_size: 10000
+
+recommendation:
+  min_relative_lift: 0.05          # 5% relative lift required for rollout
+  significance_level: 0.05
+  min_net_impact: 0.0

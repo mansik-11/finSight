@@ -1,0 +1,36 @@
+# FinSight — pinned dependencies
+# Tested against Python 3.12.
+
+# --- Data ---
+pandas==2.3.3
+numpy==2.4.4
+duckdb==1.5.5
+pyarrow>=15.0.0
+PyYAML==6.0.3
+
+# --- Statistics ---
+scipy==1.17.1
+statsmodels==0.14.6
+
+# --- Machine Learning ---
+scikit-learn==1.8.0
+xgboost==3.4.0
+
+# --- Explainability ---
+shap==0.52.0
+
+# --- Visualization ---
+plotly==6.9.0
+
+# --- Experiment tracking ---
+mlflow==3.15.1
+sqlalchemy>=2.0.0
+
+# --- Application ---
+streamlit==1.61.1
+
+# --- Utilities ---
+joblib==1.5.3
+
+# --- Testing ---
+pytest==9.1.1
